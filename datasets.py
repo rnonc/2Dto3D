@@ -23,11 +23,12 @@ class CLEVR(Dataset):
 
 # work in progress
 class GSO(Dataset):
-    def __init__(self,path,nb_images=8,) -> None:
+    def __init__(self,path,nb_images=8,output_image=2) -> None:
         super().__init__()
         self.path_dataset = path
         self.object_pathes = os.listdir(path)
         self.nb_images = nb_images
+        self.output_image = output_image
     
     def __len__(self):
         return len(self.object_pathes)
@@ -35,19 +36,19 @@ class GSO(Dataset):
     def __getitem__(self, index):
         output = {}
         path = self.path_dataset + '/' + self.object_pathes[index]
-        print(path)
-        id_x = random.randint(0,self.nb_images-1)
-        id_y = id_x#random.randint(0,self.nb_images-1)
+        inds = [i for i in range(self.nb_images)]
+        id_x = random.sample(inds,1)[0]
+        ids_y = random.sample(inds, self.output_image)
         
         output['X'] = load_rgba(path+'/'+str(id_x)+'.png').permute(2,0,1)/255
-        output['Y'] = load_rgba(path+'/'+str(id_y)+'.png').permute(2,0,1)/255
+        output['Y'] = torch.stack([load_rgba(path+'/'+str(i)+'.png').permute(2,0,1)/255 for i in ids_y],0)
         f = open(path+'/' + 'metadata.json') 
         metadata = json.load(f) 
 
         x_cam_world_matrix = torch.Tensor(metadata['cam_world_matrix'][id_x])[:3]
-        y_cam_world_matrix = torch.Tensor(metadata['cam_world_matrix'][id_y])[:3]
+        y_cam_world_matrix = [torch.Tensor(metadata['cam_world_matrix'][i])[:3] for i in ids_y]
 
-        output['relative_M']  = relative_M(x_cam_world_matrix,y_cam_world_matrix)
+        output['relative_M']  = torch.stack([relative_M(x_cam_world_matrix,i) for i in y_cam_world_matrix],0)
 
         
         return output

@@ -28,6 +28,7 @@ if args.output_dir == "":
 
 
 obj_pathes = os.listdir(args.input_dir+'/')
+#obj_pathes = ["ASICS_GELDirt_Dog_4_SunFlameBlack"]
 for obj_path in obj_pathes:
     if not os.path.exists(args.output_dir+'/'+obj_path):
         os.makedirs(args.output_dir+'/'+obj_path)
@@ -41,8 +42,9 @@ for obj_path in obj_pathes:
     try:
         import_obj(args.input_dir + '/' + obj_path)
         for i in range(args.num_images):
-            metadata['cam_world_matrix'][i] = bpy.data.objects["Camera"].matrix_world
             randomize_camera()
+            bpy.context.view_layer.update()
+            metadata['cam_world_matrix'][i] = bpy.data.objects["Camera"].matrix_world
             bpy.context.scene.render.filepath = args.output_dir+'/'+obj_path+'/'+str(i)+'.png'
             bpy.ops.render.render(write_still=True)
     except Exception as e:

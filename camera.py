@@ -39,8 +39,8 @@ class Camera_v2:
         X = X.unsqueeze(1)
         Y = Y.unsqueeze(0)
 
-        cam[...,0] = torch.sin(Y)
-        cam[...,1] = -torch.cos(Y)*torch.sin(X)
+        cam[...,0] = torch.cos(Y)*torch.sin(X)
+        cam[...,1] = -torch.sin(Y)
         cam[...,2] = -torch.cos(X)*torch.cos(Y)
 
         return cam
@@ -61,8 +61,8 @@ def transform_cam(cam,M=None):
 
 def relative_M(M_init,M):
     relative_M = torch.zeros(M_init.shape)
-    base_init = M_init[...,:3,:3]
-    base = M[...,:3,:3]
+    base_init = M_init[...,:3,:3].T
+    base = M[...,:3,:3].T
     distance_init= M_init[...,:3,3]
     distance = M[...,:3,3]
 

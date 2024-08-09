@@ -10,7 +10,7 @@ def sixDOF(vec):
     R2 = torch.cross(R0,R1,dim=-1)
     
     R = torch.stack([R0,R1,R2],dim=-2)
-    #R = torch.eye(3,3).unsqueeze(0).unsqueeze(0).repeat(R.shape[0],R.shape[1],1,1).to(vec.device)
+    R = torch.eye(3,3).unsqueeze(0).unsqueeze(0).repeat(R.shape[0],R.shape[1],1,1).to(vec.device)
     return R
 
 
@@ -18,7 +18,6 @@ def coordRay(spatialVec,rays):
     rotation = sixDOF(spatialVec[...,:6]) #(b,o,3,3)
     if len(rays.shape) == 2:
         rays = rays.unsqueeze(0).repeat(spatialVec.shape[0],1,1)
-
     coord_direction = torch.einsum('borc,bRc->bRor',rotation,rays)#(b,r,o,3)
 
     position = spatialVec[...,6:].unsqueeze(1).repeat(1,rays.shape[1],1,1)#(b,r,o,3)

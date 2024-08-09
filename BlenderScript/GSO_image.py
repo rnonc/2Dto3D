@@ -32,6 +32,7 @@ def reset_scene(resolution=128) -> None:
     render.resolution_y = resolution
     render.resolution_percentage = 100
 
+    #scene.display.render_aa = "FXAA"
     scene.cycles.device = "GPU"
     scene.cycles.samples = 128
     scene.cycles.diffuse_bounces = 1
@@ -54,7 +55,7 @@ def randomize_camera():
     distance = random.uniform(0.25, 0.5)
     return set_camera_location()
 
-def set_camera_location():
+def set_camera_location(delta_translation=True):
     # from https://blender.stackexchange.com/questions/18530/
     x, y, z = sample_spherical(radius_min=0.4, radius_max=1, maxz=2.2, minz=-2.2)
     camera = bpy.data.objects["Camera"]
@@ -63,6 +64,14 @@ def set_camera_location():
     direction = - camera.location
     rot_quat = direction.to_track_quat('-Z', 'Y')
     camera.rotation_euler = rot_quat.to_euler()
+    if delta_translation:
+        bpy.context.view_layer.update()
+        matrix_world = np.array(camera.matrix_world)
+
+        amplitude = 0.05*camera.data.sensor_width/camera.data.lens*(matrix_world[:3,-2]**2).sum()**(1/2)
+        delta = np.random.normal(size=(2,))
+
+        camera.location = np.array(camera.location) + amplitude*delta[0]*matrix_world[:3,0] + amplitude*delta[1]*matrix_world[:3,1]
     return camera
 
 def sample_spherical(radius_min=1.5, radius_max=2.0, maxz=1.6, minz=-0.75):
@@ -121,14 +130,32 @@ def set_camera(lens=35,sensor_width=32):
     
 if __name__ == "__main__":
     path  =r"C:\Users\Admin\Documents\Dataset\GSO/"
-    list_obj_path = os.listdir(path)
-    obj_path = path+list_obj_path[50]
+    obj = os.listdir(path)[0]
+    obj = "ASICS_GELDirt_Dog_4_SunFlameBlack"
+    obj_path  = path+obj
+    metadata_path  = r"C:\Users\Admin\Documents\Dataset\GSO_image/"+obj+'/metadata.json'
     reset_scene()
     set_light()
     set_camera()
     print(obj_path)
     import_obj(obj_path)
     randomize_camera()
+    bpy.context.view_layer.update()
+    f = open(metadata_path)
+    world_matrix = json.load(f)['cam_world_matrix']
+    import json
+    import numpy as np
+    import copy
+    
+    camera = bpy.data.objects["Camera"]
+    id = 5
+    imp = np.array(world_matrix[id]).transpose()
+    camera.matrix_world = imp
+    camera.location  = imp[-1,:3]
+    bpy.context.view_layer.update()
+
+    
+
     
         
 
